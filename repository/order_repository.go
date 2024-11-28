@@ -27,12 +27,15 @@ func (r *orderRepository) FindAll() ([]model.Order, error) {
 func (r *orderRepository) Save(order *model.Order) error {
 	firstDeliveryStatus := "Menunggu Pickup"
 	initialLocation := "Rumah Penjual"
-	if err := r.db.Preload("Courier").Table("couriers").First(&order, "id = ?", order.CourierID).Error; err != nil {
+	order.Status = firstDeliveryStatus
+	//if err := r.db.Preload("Courier").Find(&order).Error; err != nil {
+	//	log.Fatalf("failed to fetch order: %v", err)
+	//}
+	order.OrderStatus = append(order.OrderStatus, model.OrderStatus{Status: firstDeliveryStatus, Location: initialLocation})
+	q := r.db.Create(order)
+
+	if err := r.db.Preload("Courier").Find(&order).Error; err != nil {
 		log.Fatalf("failed to fetch order: %v", err)
 	}
-
-	order.Status = firstDeliveryStatus
-	order.OrderStatus = append(order.OrderStatus, model.OrderStatus{Status: firstDeliveryStatus, Location: initialLocation})
-
-	return r.db.Create(order).Error
+	return q.Error
 }
